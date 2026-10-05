@@ -1,68 +1,42 @@
-# Sheep Image Classifier: Najdi, Harri, and Naeimi
+# Sheep Breed Classifier: Najdi, Harri and Naeimi
 
-A training project that classifies sheep images into three breeds found in Saudi Arabia: Najdi, Harri, and Naeimi. The original workflow used transfer learning in [Teachable Machine](https://teachablemachine.withgoogle.com/) and exported a Keras model for batch inference in Python.
+An image-classification exercise from my AI and robotics training at Smart Methods (summer 2025). I trained a model in [Teachable Machine](https://teachablemachine.withgoogle.com/) (transfer learning) to tell apart three sheep breeds common in Saudi Arabia, exported it as a Keras model and wrote a Python script that tests it on folders of images.
 
-## Repository contents
+## What's in the repository
 
-| File or folder | Purpose |
+| File or folder | Contents |
 | --- | --- |
-| [`keras_model.h5`](keras_model.h5) | Original exported model, with a 224 × 224 RGB input and three output scores. |
-| [`labels.txt`](labels.txt) | Output-label order: `0 Najdi`, `1 Harri`, `2 Naeimi`. |
-| [`Batch_test.py`](Batch_test.py) | Loads the model, evaluates `.jpg` images, and prints per-image and per-class results. |
-| [`Najdi_test/`](Najdi_test/) | 11 included Najdi example images. |
-| [`Harri_test/`](Harri_test/) | 10 included Harri example images. |
-| [`Naeimi_test/`](Naeimi_test/) | 9 included Naeimi example images. |
+| [`keras_model.h5`](keras_model.h5) | The exported model: 224 × 224 RGB input, three softmax outputs. |
+| [`labels.txt`](labels.txt) | Class order: `0 Najdi`, `1 Harri`, `2 Naeimi`. |
+| [`Batch_test.py`](Batch_test.py) | Runs the model on every test folder and prints per-image and per-class results. |
+| [`Najdi_test/`](Najdi_test/), [`Harri_test/`](Harri_test/), [`Naeimi_test/`](Naeimi_test/) | Test images: 11 Najdi, 10 Harri and 9 Naeimi. |
 
-Keep the model's output order aligned with `labels.txt`. Folder names must match a label followed by `_test`, including its spelling and case, because the script uses those names as dictionary keys.
+## Setup
 
-## Historical environment and setup
-
-The original documented environment was Python 3.9.x with TensorFlow 2.15.0, Pillow, and NumPy. The H5 file records Keras 2.4.0 export metadata. These are historical project details; compatibility with a newly installed environment has not been retested.
-
-Create a virtual environment using a Python 3.9 interpreter:
+The project used Python 3.9 with TensorFlow 2.15.0, Pillow and NumPy. The model file itself was saved by Keras 2.4.0.
 
 ```sh
 python -m venv .venv
-```
-
-Activate it with the command for your shell:
-
-```sh
-# macOS or Linux
-source .venv/bin/activate
-```
-
-```powershell
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-```
-
-Install the historical dependency set:
-
-```sh
+source .venv/bin/activate          # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 python -m pip install tensorflow==2.15.0 pillow numpy
 ```
 
-The script uses TensorFlow's bundled Keras API; it does not import the separate `keras` package. Availability of the historical TensorFlow build depends on the interpreter and platform.
+The script uses the Keras API bundled with TensorFlow, so the separate `keras` package isn't needed.
 
-## Batch evaluation
+## Run the evaluation
 
-Run from the repository root so the relative model, label, and image paths resolve:
+From the repository root:
 
 ```sh
 python Batch_test.py
 ```
 
-For each directory ending in `_test`, the script processes filenames ending in `.jpg` without regard to extension case. PNG and `.jpeg` files are not included by the current filter.
+The script goes through every folder whose name ends in `_test`, takes the part before `_test` as the true breed, and classifies each `.jpg` image in it. Each image is converted to RGB, resized to 224 × 224, scaled to [0, 1] and passed to the model; the class with the highest score is the prediction. It prints every prediction with its score, then the number and percentage of correct predictions per breed.
 
-Each image is converted to RGB, resized to 224 × 224 pixels, divided by 255 to produce values in `[0, 1]`, and passed to the model as a one-image batch. The highest output score determines the predicted label. The script prints each prediction and its score, then counts correct predictions against the folder label and prints a percentage per class. It does not write a report file.
+Folder names must match the labels in `labels.txt` exactly, including capital letters. Only `.jpg` files are read.
 
-## Limitations and review status
+## Known issues
 
-- The 30 included examples are a small, uneven set. The repository does not establish a held-out split or demonstrate that these images were excluded from training.
-- The training dataset, class balance, and training history are not included. Generalization to new photos has not been established.
-- The current script uses `[0, 1]` pixel scaling. Its match to the original Teachable Machine export preprocessing needs verification before using the printed results as performance evidence.
-- A model score is not a calibrated guarantee. The evaluator counts only successfully processed images; decode or prediction errors are printed and excluded from the percentage denominator. A class with no processed images is displayed as 0%, which should not be interpreted as a measured accuracy.
-- Filenames and model files are preserved from the original submission. IDE metadata was removed from version control, and Python caches and virtual environments are ignored.
-
-This cleanup reviewed the source, model metadata, labels, and file counts. It did not load the model into TensorFlow, run inference, retrain it, or rerun the historical evaluation. No new accuracy claim is made.
+- Teachable Machine's own export code centre-crops each image and scales the pixels to [−1, 1]. `Batch_test.py` stretches the image and scales to [0, 1] instead, so the accuracy it prints is not a reliable measure of the model.
+- The test set is small (30 images), and nothing here shows whether these images were kept out of training. The training images and training history aren't included.
+- An image that fails to load is reported and left out of the percentage. A breed with no processed images shows 0%.
